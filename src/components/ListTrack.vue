@@ -4,7 +4,7 @@
       linear-gradient(to left,  rgba(255,255,255,0) 20%, rgba(255,255,255,1)),
       url(${track.cover})`}">
     <div class="track__actions">
-    <div class='track__button' @click='stopSong'>
+    <div class='track__button' @click='stop'>
       <svg
       xmlns="http://www.w3.org/2000/svg"
       class="icon icon-tabler icon-tabler-player-stop"
@@ -21,7 +21,7 @@
       <rect x="5" y="5" width="14" height="14" rx="2" />
       </svg>
     </div>
-    <div class='track__button' v-if="true" @click='playSong'>
+    <div class='track__button' v-if="true" @click='play'>
       <svg
         xmlns='http://www.w3.org/2000/svg'
         class='icon icon-tabler icon-tabler-player-play'
@@ -38,7 +38,7 @@
         <path d='M7 4v16l13 -8z' />
       </svg>
     </div>
-    <div class='track__button' v-else @click='pauseSong'>
+    <div class='track__button' v-else @click='pause'>
       <svg
         xmlns="http://www.w3.org/2000/svg"
         class="icon icon-tabler icon-tabler-player-pause"
@@ -67,6 +67,9 @@
   </div>
 </template>
 <script>
+import { useStore } from 'vuex';
+import { toRefs } from 'vue';
+
 export default {
   props: {
     track: {
@@ -75,21 +78,30 @@ export default {
     },
   },
   setup(props, { emit }) {
+    const store = useStore();
+    const currentTrack = toRefs(props.track);
+
     function select() {
       emit('Selected');
     }
 
     function play() {
-      emit('Play');
+      store.dispatch('setTrack', currentTrack);
+      store.dispatch('play');
+    }
+
+    function pause() {
+      store.dispatch('pause');
     }
 
     function stop() {
-      emit('stop');
+      store.dispatch('stop');
     }
 
     return {
       select,
       play,
+      pause,
       stop,
     };
   },

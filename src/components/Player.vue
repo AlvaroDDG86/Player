@@ -2,7 +2,6 @@
   <div class='player' id='player' v-if="track">
     <List
       :listClosed="listClosed"
-      :tracks="tracks"
       @hide="listClosed = true"
       playTrack="playTrack"
       stopTrack="stopTrack"/>
@@ -186,217 +185,80 @@
         </div>
       </div>
     </div>
-    <Modal :modalOpen="modalOpen" @close="modalOpen = false"/>
   </div>
 </template>
 
 <script>
 import {
-  ref, onMounted, watch, computed,
+  ref, onMounted, computed,
 } from 'vue';
-import Modal from './Modal.vue';
+import { useStore } from 'vuex';
 import List from './List.vue';
 
 export default {
   name: 'Player',
   components: {
-    Modal,
     List,
   },
   setup() {
-    const tracks = ref([
-      {
-        name: 'Mekanın Sahibi',
-        artist: 'Norm Ender',
-        cover:
-          'https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/1.jpg',
-        source:
-          'https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/1.mp3',
-        url: 'https://www.youtube.com/watch?v=z3wAjJXbYzA',
-        favorited: false,
-      },
-      {
-        name: 'Everybody Knows',
-        artist: 'Leonard Cohen',
-        cover:
-          'https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/2.jpg',
-        source:
-          'https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/2.mp3',
-        url: 'https://www.youtube.com/watch?v=Lin-a2lTelg',
-        favorited: true,
-      },
-      {
-        name: 'Extreme Ways',
-        artist: 'Moby',
-        cover:
-          'https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/3.jpg',
-        source:
-          'https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/3.mp3',
-        url: 'https://www.youtube.com/watch?v=ICjyAe9S54c',
-        favorited: false,
-      },
-      {
-        name: 'Butterflies',
-        artist: 'Sia',
-        cover:
-          'https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/4.jpg',
-        source:
-          'https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/4.mp3',
-        url: 'https://www.youtube.com/watch?v=kYgGwWYOd9Y',
-        favorited: false,
-      },
-      {
-        name: 'The Final Victory',
-        artist: 'Haggard',
-        cover:
-          'https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/5.jpg',
-        source:
-          'https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/5.mp3',
-        url: 'https://www.youtube.com/watch?v=0WlpALnQdN8',
-        favorited: true,
-      },
-      {
-        name: 'Genius ft. Sia, Diplo, Labrinth',
-        artist: 'LSD',
-        cover:
-          'https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/6.jpg',
-        source:
-          'https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/6.mp3',
-        url: 'https://www.youtube.com/watch?v=HhoATZ1Imtw',
-        favorited: false,
-      },
-      {
-        name: 'The Comeback Kid',
-        artist: 'Lindi Ortega',
-        cover:
-          'https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/7.jpg',
-        source:
-          'https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/7.mp3',
-        url: 'https://www.youtube.com/watch?v=me6aoX0wCV8',
-        favorited: true,
-      },
-      {
-        name: 'Overdose',
-        artist: 'Grandson',
-        cover:
-          'https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/8.jpg',
-        source:
-          'https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/8.mp3',
-        url: 'https://www.youtube.com/watch?v=00-Rl3Jlx-o',
-        favorited: false,
-      },
-      {
-        name: 'Rag\'Bone Man',
-        artist: 'Human',
-        cover:
-          'https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/9.jpg',
-        source:
-          'https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/9.mp3',
-        url: 'https://www.youtube.com/watch?v=L3wKzyIN1yk',
-        favorited: false,
-      },
-    ]);
-    const track = ref(null);
-    let play = null;
-    const playing = ref(false);
-    const timer = ref('00:00');
-    const percent = ref(0);
-    const songTime = ref(0);
-    let interval = null;
-    const duration = ref('');
+    // VUEX
+    const store = useStore();
+    const track = computed(() => store.getters.getTrack);
+    const playing = computed(() => store.getters.getPlaying);
+    const duration = computed(() => store.getters.getDuration);
+    const timer = computed(() => store.getters.getCurrentTime);
+    const percent = computed(() => store.getters.getPercent);
+
+    // Info song
     const totalTime = computed(() => {
-      if (duration.value) {
-        const minutes = Math.floor((duration.value % 3600) / 60).toString().padStart(2, '0');
-        const seconds = Math.floor(duration.value % 3600 % 60).toString().padStart(2, '0');
-        return `${minutes}:${seconds}`;
-      }
-      return '00:00';
+      const minutes = Math.floor((duration.value % 3600) / 60).toString().padStart(2, '0');
+      const seconds = Math.floor(duration.value % 3600 % 60).toString().padStart(2, '0');
+      return `${minutes}:${seconds}`;
     });
-    const volume = ref(50);
-    const modalOpen = ref(false);
+
+    // List show control
     const listClosed = ref(true);
+
+    // Volume
+    const volume = ref(50);
     let oldVolume = 0;
 
     onMounted(() => {
-      const index = 0;
-      track.value = tracks.value[index];
-    });
-
-    function loadedPLay() {
-      duration.value = play.duration;
-      play.volume = volume.value / 100;
-    }
-
-    watch(track, (newValue) => {
-      play = new Audio(newValue.source);
-      play.onloadedmetadata = loadedPLay;
-      playing.value = false;
-    });
-
-    watch(songTime, (newValue) => {
-      if (songTime.value > 0) {
-        const minutes = Math.floor((newValue % 3600) / 60).toString().padStart(2, '0');
-        const seconds = Math.floor(newValue % 3600 % 60).toString().padStart(2, '0');
-        timer.value = `${minutes}:${seconds}`;
-        percent.value = (newValue * 100) / duration.value;
-      } else {
-        timer.value = '00:00';
-        percent.value = 0;
-      }
+      store.dispatch('setTrack');
     });
 
     function pauseSong() {
-      play.pause();
-      clearInterval(interval);
-      playing.value = false;
+      store.dispatch('pause');
     }
 
     function playSong() {
-      play.play();
-      interval = setInterval(() => {
-        songTime.value += 1;
-      }, 1000);
-      playing.value = true;
+      store.dispatch('play');
     }
 
     function stopSong() {
-      play.pause();
-      play.currentTime = 0;
-      clearInterval(interval);
-      songTime.value = 0;
-      playing.value = false;
+      store.dispatch('stop');
     }
 
     function next() {
-      let index = tracks.value.findIndex((song) => song.source === track.value.source) + 1;
-      if (index === tracks.value.length) {
-        index = 0;
-      }
-      stopSong();
-      track.value = tracks.value[index];
+      store.dispatch('next', track);
     }
 
     function prev() {
-      let index = tracks.value.findIndex((song) => song.source === track.value.source) - 1;
-      if (index === -1) {
-        index = (tracks.value.length - 1);
-      }
-      stopSong();
-      track.value = tracks.value[index];
+      store.dispatch('prev', track);
     }
 
     function volumeChange(event) {
-      play.volume = event.target.value / 100;
+      store.dispatch('setVolume', event.target.value / 100);
       volume.value = event.target.value;
     }
 
     function mute() {
       if (oldVolume !== 0) {
-        play.volume = oldVolume / 100;
+        store.dispatch('setVolume', oldVolume / 100);
         volume.value = oldVolume;
         oldVolume = 0;
       } else {
-        play.volume = 0;
+        store.dispatch('setVolume', 0);
         oldVolume = volume.value;
         volume.value = 0;
       }
@@ -406,22 +268,16 @@ export default {
       window.open(track.value.url);
     }
 
-    // function openList() {
-    //   modalOpen.value = true;
-    // }
-
     function openList() {
       listClosed.value = false;
     }
 
     return {
-      tracks,
       track,
       playing,
       totalTime,
       timer,
       volume,
-      modalOpen,
       listClosed,
       percent,
       onMounted,
@@ -520,12 +376,6 @@ export default {
     background-color: rgba(204, 204, 204, 0.753);
     padding: 0.5em;
     margin: 0;
-  }
-
-  &__button:active {
-    background-color: rgba(204, 204, 204, 0.753);
-    padding: 0.3em;
-    margin: 0.2em;
   }
 
   &__control {

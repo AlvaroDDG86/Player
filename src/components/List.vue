@@ -2,7 +2,6 @@
   <div class="list" :class="{ 'hide': listClosed }">
     <div class="list__title">
       List track
-
     </div>
     <span @click="closeList" class="list__close">
       <svg
@@ -26,13 +25,12 @@
       v-for="(track, index) in tracks"
       class="list__track"
       :key="`track_${index}`"
-      :track="track"
-      @play="playTrack($index)"
-      @stop="stopTrack($index)"/>
+      :track="track"/>
   </div>
 </template>
 
 <script>
+import { useStore } from 'vuex';
 import Track from './ListTrack.vue';
 
 export default {
@@ -44,28 +42,18 @@ export default {
       type: Boolean,
       required: true,
     },
-    tracks: {
-      type: [],
-      required: true,
-    },
   },
   setup(_, { emit }) {
+    const store = useStore();
+    const tracks = store.getters.getTracks;
+
     function closeList() {
       emit('hide');
     }
 
-    function playTrack(index) {
-      emit('playTrack', index);
-    }
-
-    function stopTrack(index) {
-      emit('stopTrack', index);
-    }
-
     return {
       closeList,
-      playTrack,
-      stopTrack,
+      tracks,
     };
   },
 };
