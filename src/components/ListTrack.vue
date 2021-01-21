@@ -1,10 +1,12 @@
 <template>
   <div class="track"
+    @click="play"
+    :class="{ 'pulse' : playing, 'selected': current }"
     :style="{ background: `
       linear-gradient(to left,  rgba(255,255,255,0) 20%, rgba(255,255,255,1)),
       url(${track.cover})`}">
     <div class="track__actions">
-    <div class='track__button' @click='stop'>
+    <div class='track__button' @click.stop='stop'>
       <svg
       xmlns="http://www.w3.org/2000/svg"
       class="icon icon-tabler icon-tabler-player-stop"
@@ -21,7 +23,7 @@
       <rect x="5" y="5" width="14" height="14" rx="2" />
       </svg>
     </div>
-    <div class='track__button' v-if="true" @click='play'>
+    <div class='track__button' v-if="!playing" @click.stop='play'>
       <svg
         xmlns='http://www.w3.org/2000/svg'
         class='icon icon-tabler icon-tabler-player-play'
@@ -38,7 +40,7 @@
         <path d='M7 4v16l13 -8z' />
       </svg>
     </div>
-    <div class='track__button' v-else @click='pause'>
+    <div class='track__button' v-else @click.stop='pause'>
       <svg
         xmlns="http://www.w3.org/2000/svg"
         class="icon icon-tabler icon-tabler-player-pause"
@@ -63,12 +65,15 @@
       <div class="track__title">
         {{track.name}}
       </div>
+      <div class="track__info-time">
+        {{currentTime ? `${currentTime} - ${duration}` : ''}}
+      </div>
     </div>
   </div>
 </template>
 <script>
 import { useStore } from 'vuex';
-import { toRefs } from 'vue';
+import { computed } from 'vue';
 
 export default {
   props: {
@@ -77,20 +82,35 @@ export default {
       required: true,
     },
   },
-  setup(props, { emit }) {
+  setup(props) {
     const store = useStore();
-    const currentTrack = toRefs(props.track);
-
-    function select() {
-      emit('Selected');
-    }
+    const current = computed(() => store.getters.getTrack.source === props.track.source);
+    const playing = computed(() => store.getters.getPlaying
+      && store.getters.getTrack.source === props.track.source);
+    const duration = computed(() => {
+      if (store.getters.getTrack.source === props.track.source) {
+        return store.getters.getDuration;
+      }
+      return '';
+    });
+    const currentTime = computed(() => {
+      if (store.getters.getTrack.source === props.track.source) {
+        return store.getters.getCurrentTime;
+      }
+      return '';
+    });
+    let fromPause = false;
 
     function play() {
-      store.dispatch('setTrack', currentTrack);
+      if (!fromPause) {
+        store.dispatch('setTrack', props.track);
+        fromPause = false;
+      }
       store.dispatch('play');
     }
 
     function pause() {
+      fromPause = true;
       store.dispatch('pause');
     }
 
@@ -99,7 +119,10 @@ export default {
     }
 
     return {
-      select,
+      current,
+      playing,
+      duration,
+      currentTime,
       play,
       pause,
       stop,
@@ -117,6 +140,7 @@ export default {
   margin: 2px 5px;
   display: grid;
   grid-template-columns: 20% 80%;
+  cursor: pointer;
 
   &__button {
     cursor: pointer;
@@ -130,5 +154,13 @@ export default {
   &__title {
     color: $light-gray;
   }
+
+  &__info-time {
+    font-size: 1.1em;
+  }
+}
+
+.selected {
+  border: 3px solid gold;
 }
 </style>

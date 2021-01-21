@@ -9,7 +9,9 @@
     <div
       class='player__img'
       :style="{ backgroundImage: `url(${track.cover})` }"
-      :class="{ 'pulse' : playing }" />
+      :class="{ 'pulse' : playing,
+        'inRight animate' : animateLeft,
+        'inLeft animate' : animateRight }" />
     <div class='player__info'>
       <div class='player__author'>{{track.artist}}</div>
       <div class='player__song'>{{track.name}}</div>
@@ -105,7 +107,7 @@
             </svg>
           </div>
         </div>
-        <div class='player__total'>{{totalTime}}</div>
+        <div class='player__total'>{{duration}}</div>
         <div class='player__progress'>
           <span :style="{ width: `${percent}%` }"></span>
         </div>
@@ -208,13 +210,8 @@ export default {
     const duration = computed(() => store.getters.getDuration);
     const timer = computed(() => store.getters.getCurrentTime);
     const percent = computed(() => store.getters.getPercent);
-
-    // Info song
-    const totalTime = computed(() => {
-      const minutes = Math.floor((duration.value % 3600) / 60).toString().padStart(2, '0');
-      const seconds = Math.floor(duration.value % 3600 % 60).toString().padStart(2, '0');
-      return `${minutes}:${seconds}`;
-    });
+    const animateLeft = ref(false);
+    const animateRight = ref(false);
 
     // List show control
     const listClosed = ref(true);
@@ -241,10 +238,18 @@ export default {
 
     function next() {
       store.dispatch('next', track);
+      animateLeft.value = true;
+      setTimeout(() => {
+        animateLeft.value = false;
+      }, 1000);
     }
 
     function prev() {
       store.dispatch('prev', track);
+      animateRight.value = true;
+      setTimeout(() => {
+        animateRight.value = false;
+      }, 1000);
     }
 
     function volumeChange(event) {
@@ -275,10 +280,12 @@ export default {
     return {
       track,
       playing,
-      totalTime,
+      duration,
       timer,
       volume,
       listClosed,
+      animateLeft,
+      animateRight,
       percent,
       onMounted,
       next,
@@ -433,28 +440,6 @@ export default {
     font-weight: bold;
     font-size: 0.8em;
     color: gray;
-  }
-}
-
-.pulse {
-    transform: scale(1);
-    animation: pulse 1.3s infinite;
-  }
-
-@keyframes pulse {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
-  }
-
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
-  }
-
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
   }
 }
 </style>

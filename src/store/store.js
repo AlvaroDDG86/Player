@@ -3,7 +3,9 @@ import { createStore } from 'vuex';
 function createAudio(track, commit) {
   const audio = new Audio(track.source);
   audio.onloadedmetadata = function () {
-    commit('SET_DURATION', audio.duration);
+    const minutes = Math.floor((audio.duration % 3600) / 60).toString().padStart(2, '0');
+    const seconds = Math.floor(audio.duration % 3600 % 60).toString().padStart(2, '0');
+    commit('SET_DURATION', `${minutes}:${seconds}`);
   };
   return audio;
 }
@@ -153,9 +155,11 @@ const store = createStore({
     setTrack({
       commit,
       state,
+      dispatch,
     }, payload) {
       let audio = null;
       let track = null;
+      dispatch('stop');
       if (!payload) { // inicio
         const index = 1;
         audio = createAudio(state.tracks[index], commit);
@@ -224,12 +228,14 @@ const store = createStore({
       state,
     }) {
       commit('SET_PLAYING', false);
-      state.audio.pause();
-      state.audio.currentTime = 0;
-      state.songTime = 0;
       commit('SET_CURRENT_TIME', '00:00');
       commit('SET_PERCENT', 0);
-      clearInterval(state.interval);
+      if (state.audio) {
+        state.songTime = 0;
+        state.audio.pause();
+        state.audio.currentTime = 0;
+        clearInterval(state.interval);
+      }
     },
     setVolume({
       state,
