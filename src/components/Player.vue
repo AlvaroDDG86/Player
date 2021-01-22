@@ -5,6 +5,51 @@
       @hide="listClosed = true"
       playTrack="playTrack"
       stopTrack="stopTrack"/>
+    <div class='player__button--left' @click='openList'>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="icon icon-tabler icon-tabler-player-list"
+        width="25"
+        height="25"
+        viewBox="0 0 24 24"
+        stroke-width="2"
+        stroke="#005CC8"
+        fill="none"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        >
+        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+        <line x1="9" y1="6" x2="20" y2="6" />
+        <line x1="9" y1="12" x2="20" y2="12" />
+        <line x1="9" y1="18" x2="20" y2="18" />
+        <line x1="5" y1="6" x2="5" y2="6.01" />
+        <line x1="5" y1="12" x2="5" y2="12.01" />
+        <line x1="5" y1="18" x2="5" y2="18.01" />
+      </svg>
+    </div>
+    <div class='player__button--right' @click='openGihtub'>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="icon icon-tabler icon-tabler-player-list"
+        width="25"
+        height="25"
+        viewBox="0 0 24 24"
+        stroke-width="2"
+        stroke="#005CC8"
+        fill="none"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        >
+        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+        <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6
+          -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8
+          -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3
+          -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3
+          12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2
+          4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0
+          4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+      </svg>
+    </div>
     <div class='player__header'><strong>Vue</strong>Player</div>
     <div
       class='player__img'
@@ -108,33 +153,11 @@
           </div>
         </div>
         <div class='player__total'>{{duration}}</div>
-        <div class='player__progress'>
+        <div class='player__progress' @click="setTimeSong($event)">
           <span :style="{ width: `${percent}%` }"></span>
         </div>
         <div class='player__current'>{{timer}}</div>
         <div class='player__actions--down'>
-          <div class='player__button' @click='openList'>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="icon icon-tabler icon-tabler-player-list"
-              width="25"
-              height="25"
-              viewBox="0 0 24 24"
-              stroke-width="2"
-              stroke="#005CC8"
-              fill="none"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              >
-              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-              <line x1="9" y1="6" x2="20" y2="6" />
-              <line x1="9" y1="12" x2="20" y2="12" />
-              <line x1="9" y1="18" x2="20" y2="18" />
-              <line x1="5" y1="6" x2="5" y2="6.01" />
-              <line x1="5" y1="12" x2="5" y2="12.01" />
-              <line x1="5" y1="18" x2="5" y2="18.01" />
-            </svg>
-          </div>
           <div class='player__button' @click='openLink'>
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -208,6 +231,7 @@ export default {
     const track = computed(() => store.getters.getTrack);
     const playing = computed(() => store.getters.getPlaying);
     const duration = computed(() => store.getters.getDuration);
+    const secondsDuration = computed(() => store.getters.getSecondsDuration);
     const timer = computed(() => store.getters.getCurrentTime);
     const percent = computed(() => store.getters.getPercent);
     const animateLeft = ref(false);
@@ -241,7 +265,8 @@ export default {
       animateLeft.value = true;
       setTimeout(() => {
         animateLeft.value = false;
-      }, 1000);
+        store.dispatch('play');
+      }, 500);
     }
 
     function prev() {
@@ -249,7 +274,8 @@ export default {
       animateRight.value = true;
       setTimeout(() => {
         animateRight.value = false;
-      }, 1000);
+        store.dispatch('play');
+      }, 500);
     }
 
     function volumeChange(event) {
@@ -277,6 +303,16 @@ export default {
       listClosed.value = false;
     }
 
+    function setTimeSong(event) {
+      const fullWidth = event.target.offsetWidth;
+      const x = event.clientX - event.target.getBoundingClientRect().left;
+      console.log((x * secondsDuration.value) / fullWidth);
+      store.dispatch('setTimeSong', {
+        percent: (x * 100) / fullWidth,
+        currentTime: (x * secondsDuration.value) / fullWidth,
+      });
+    }
+
     return {
       track,
       playing,
@@ -297,6 +333,7 @@ export default {
       mute,
       openLink,
       openList,
+      setTimeSong,
     };
   },
 };
@@ -377,6 +414,18 @@ export default {
     padding: 0.3em;
     margin: 0.2em;
     border-radius: 50%;
+
+    &--right {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+    }
+
+    &--left {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+    }
   }
 
   &__button:hover {
@@ -443,3 +492,22 @@ export default {
   }
 }
 </style>
+
+// repeat
+// <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+//   <path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3" />
+//   <path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3" />
+
+next
+// <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+//   <line x1="21" y1="7" x2="3" y2="7" />
+//   <path d="M18 10l3 -3l-3 -3" />
+//   <path d="M6 20l-3 -3l3 -3" />
+//   <line x1="3" y1="17" x2="21" y2="17" />
+
+// soufle
+// <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+// <line x1="21" y1="7" x2="3" y2="7" />
+// <path d="M18 10l3 -3l-3 -3" />
+// <path d="M6 20l-3 -3l3 -3" />
+// <line x1="3" y1="17" x2="21" y2="17" />

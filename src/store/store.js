@@ -6,6 +6,7 @@ function createAudio(track, commit) {
     const minutes = Math.floor((audio.duration % 3600) / 60).toString().padStart(2, '0');
     const seconds = Math.floor(audio.duration % 3600 % 60).toString().padStart(2, '0');
     commit('SET_DURATION', `${minutes}:${seconds}`);
+    commit('SET_SECONDS_DURATION', audio.duration);
   };
   return audio;
 }
@@ -117,6 +118,7 @@ const store = createStore({
     audio: null,
     playing: false,
     duration: 0,
+    secondsDuration: 0,
     currentTime: '00:00',
     interval: null,
     songTime: 0,
@@ -128,6 +130,7 @@ const store = createStore({
     getAudio: (state) => state.audio,
     getPlaying: (state) => state.playing,
     getDuration: (state) => state.duration,
+    getSecondsDuration: (state) => state.secondsDuration,
     getCurrentTime: (state) => state.currentTime,
     getPercent: (state) => state.percent,
   },
@@ -144,11 +147,17 @@ const store = createStore({
     SET_DURATION(state, payload) {
       state.duration = payload;
     },
+    SET_SECONDS_DURATION(state, payload) {
+      state.secondsDuration = payload;
+    },
     SET_CURRENT_TIME(state, payload) {
       state.currentTime = payload;
     },
     SET_PERCENT(state, payload) {
       state.percent = payload;
+    },
+    SET_TIME_SONG(state, payload) {
+      state.audio.currentTime = payload;
     },
   },
   actions: {
@@ -204,6 +213,7 @@ const store = createStore({
     play({
       commit,
       state,
+      dispatch,
     }) {
       commit('SET_PLAYING', true);
       state.audio.play();
@@ -212,7 +222,10 @@ const store = createStore({
         const minutes = Math.floor((state.songTime % 3600) / 60).toString().padStart(2, '0');
         const seconds = Math.floor(state.songTime % 3600 % 60).toString().padStart(2, '0');
         commit('SET_CURRENT_TIME', `${minutes}:${seconds}`);
-        commit('SET_PERCENT', (state.songTime * 100) / state.duration);
+        commit('SET_PERCENT', (state.songTime * 100) / state.audio.duration);
+        if (Math.floor((state.songTime * 100) / state.audio.duration) === 100) {
+          dispatch('stop');
+        }
       }, 1000);
     },
     pause({
@@ -241,6 +254,14 @@ const store = createStore({
       state,
     }, payload) {
       state.audio.volume = payload;
+    },
+    setTimeSong({
+      commit,
+      state,
+    }, payload) {
+      state.songTime = parseInt(payload.currentTime, 10);
+      commit('SET_TIME_SONG', payload.currentTime);
+      commit('SET_PERCENT', payload.percent);
     },
   },
 });
