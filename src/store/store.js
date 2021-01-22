@@ -123,6 +123,8 @@ const store = createStore({
     interval: null,
     songTime: 0,
     percent: 0,
+    repeat: 3,
+    volume: 50,
   },
   getters: {
     getTracks: (state) => state.tracks,
@@ -133,6 +135,7 @@ const store = createStore({
     getSecondsDuration: (state) => state.secondsDuration,
     getCurrentTime: (state) => state.currentTime,
     getPercent: (state) => state.percent,
+    getRepeat: (state) => state.repeat,
   },
   mutations: {
     SET_TRACK(state, payload) {
@@ -159,6 +162,12 @@ const store = createStore({
     SET_TIME_SONG(state, payload) {
       state.audio.currentTime = payload;
     },
+    SET_REPEAT(state, payload) {
+      state.repeat = payload;
+    },
+    SET_VOLUME(state, payload) {
+      state.volume = payload;
+    },
   },
   actions: {
     setTrack({
@@ -170,7 +179,7 @@ const store = createStore({
       let track = null;
       dispatch('stop');
       if (!payload) { // inicio
-        const index = 1;
+        const index = Math.floor(Math.random() * state.tracks.length);
         audio = createAudio(state.tracks[index], commit);
         track = state.tracks[index];
       } else {
@@ -184,8 +193,8 @@ const store = createStore({
       commit,
       state,
       dispatch,
-    }, track) {
-      let index = state.tracks.findIndex((song) => song.source === track.value.source) - 1;
+    }) {
+      let index = state.tracks.findIndex((song) => song.source === state.track.source) - 1;
       if (index === -1) {
         index = (state.tracks.length - 1);
       }
@@ -194,21 +203,24 @@ const store = createStore({
       const audio = createAudio(newTrack, commit);
       commit('SET_AUDIO', audio);
       commit('SET_TRACK', newTrack);
+      dispatch('play');
     },
     next({
       commit,
       state,
       dispatch,
-    }, track) {
-      let index = state.tracks.findIndex((song) => song.source === track.value.source) + 1;
+    }) {
+      let index = state.tracks.findIndex((song) => song.source === state.track.source) + 1;
       if (index === state.tracks.length) {
         index = 0;
       }
       const newTrack = state.tracks[index];
       dispatch('stop');
       const audio = createAudio(newTrack, commit);
+      audio.volume = state.volume;
       commit('SET_AUDIO', audio);
       commit('SET_TRACK', newTrack);
+      dispatch('play');
     },
     play({
       commit,
@@ -224,7 +236,21 @@ const store = createStore({
         commit('SET_CURRENT_TIME', `${minutes}:${seconds}`);
         commit('SET_PERCENT', (state.songTime * 100) / state.audio.duration);
         if (Math.floor((state.songTime * 100) / state.audio.duration) === 100) {
-          dispatch('stop');
+          switch (state.repeat) {
+            case 1: // nothing
+              dispatch('stop');
+              break;
+            case 2: // repeat
+              dispatch('stop');
+              dispatch('play');
+              break;
+            case 3: // next
+              dispatch('next');
+              break;
+            default:
+              dispatch('stop');
+              break;
+          }
         }
       }, 1000);
     },
@@ -253,6 +279,7 @@ const store = createStore({
     setVolume({
       state,
     }, payload) {
+      this.commit('SET_VOLUME', payload);
       state.audio.volume = payload;
     },
     setTimeSong({
@@ -262,6 +289,11 @@ const store = createStore({
       state.songTime = parseInt(payload.currentTime, 10);
       commit('SET_TIME_SONG', payload.currentTime);
       commit('SET_PERCENT', payload.percent);
+    },
+    setRepeat({
+      commit,
+    }, payload) {
+      commit('SET_REPEAT', payload);
     },
   },
 });

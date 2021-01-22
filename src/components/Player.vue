@@ -27,7 +27,7 @@
         <line x1="5" y1="18" x2="5" y2="18.01" />
       </svg>
     </div>
-    <div class='player__button--right' @click='openGihtub'>
+    <div class='player__button--right' @click='openGithub'>
       <svg
         xmlns="http://www.w3.org/2000/svg"
         class="icon icon-tabler icon-tabler-player-list"
@@ -35,7 +35,7 @@
         height="25"
         viewBox="0 0 24 24"
         stroke-width="2"
-        stroke="#005CC8"
+        stroke="#FF5CC8"
         fill="none"
         stroke-linecap="round"
         stroke-linejoin="round"
@@ -55,8 +55,7 @@
       class='player__img'
       :style="{ backgroundImage: `url(${track.cover})` }"
       :class="{ 'pulse' : playing,
-        'inRight animate' : animateLeft,
-        'inLeft animate' : animateRight }" />
+        'inRight animate' : animateLeft}" />
     <div class='player__info'>
       <div class='player__author'>{{track.artist}}</div>
       <div class='player__song'>{{track.name}}</div>
@@ -123,7 +122,8 @@
               width="46"
               height="46"
               viewBox="0 0 24 24"
-              stroke-width="2" stroke="#005CC8"
+              stroke-width="2"
+              stroke="#FF5CC8"
               fill="none"
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -176,6 +176,44 @@
               <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
             </svg>
           </div>
+          <div class='player__button' @click='setRepeat(2)'>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="icon icon-tabler icon-tabler-player-open"
+              width="25"
+              height="25"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              :stroke="repeat === 2 ? '#FF5CC8' : '#005CC8'"
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              >
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+              <path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3" />
+              <path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3" />
+            </svg>
+          </div>
+          <div class='player__button' @click='setRepeat(3)'>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="icon icon-tabler icon-tabler-player-open"
+              width="25"
+              height="25"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              :stroke="repeat === 3 ? '#FF5CC8' : '#005CC8'"
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              >
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+              <line x1="21" y1="17" x2="3" y2="17" />
+              <path d="M18 4l3 3l-3 3" />
+              <path d="M18 20l3 -3l-3 -3" />
+              <line x1="21" y1="7" x2="3" y2="7" />
+            </svg>
+          </div>
         </div>
       </div>
       <div class="player__volume">
@@ -195,7 +233,7 @@
             height="16"
             viewBox="0 0 24 24"
             stroke-width="2"
-            stroke="#005CC8"
+            :stroke="volume === 0 ? '#FF5CC8' : '#005CC8'"
             fill="none"
             stroke-linecap="round"
             stroke-linejoin="round"
@@ -215,7 +253,7 @@
 
 <script>
 import {
-  ref, onMounted, computed,
+  ref, onMounted, computed, watch,
 } from 'vue';
 import { useStore } from 'vuex';
 import List from './List.vue';
@@ -234,8 +272,8 @@ export default {
     const secondsDuration = computed(() => store.getters.getSecondsDuration);
     const timer = computed(() => store.getters.getCurrentTime);
     const percent = computed(() => store.getters.getPercent);
+    const repeat = computed(() => store.getters.getRepeat);
     const animateLeft = ref(false);
-    const animateRight = ref(false);
 
     // List show control
     const listClosed = ref(true);
@@ -243,6 +281,15 @@ export default {
     // Volume
     const volume = ref(50);
     let oldVolume = 0;
+
+    watch(track, () => {
+      animateLeft.value = true;
+      setTimeout(() => {
+        animateLeft.value = false;
+      }, 500);
+    }, {
+      immediate: false,
+    });
 
     onMounted(() => {
       store.dispatch('setTrack');
@@ -261,21 +308,11 @@ export default {
     }
 
     function next() {
-      store.dispatch('next', track);
-      animateLeft.value = true;
-      setTimeout(() => {
-        animateLeft.value = false;
-        store.dispatch('play');
-      }, 500);
+      store.dispatch('next');
     }
 
     function prev() {
-      store.dispatch('prev', track);
-      animateRight.value = true;
-      setTimeout(() => {
-        animateRight.value = false;
-        store.dispatch('play');
-      }, 500);
+      store.dispatch('prev');
     }
 
     function volumeChange(event) {
@@ -299,18 +336,25 @@ export default {
       window.open(track.value.url);
     }
 
+    function openGithub() {
+      window.open('https://www.github.com');
+    }
+
     function openList() {
       listClosed.value = false;
     }
 
     function setTimeSong(event) {
-      const fullWidth = event.target.offsetWidth;
       const x = event.clientX - event.target.getBoundingClientRect().left;
-      console.log((x * secondsDuration.value) / fullWidth);
       store.dispatch('setTimeSong', {
-        percent: (x * 100) / fullWidth,
-        currentTime: (x * secondsDuration.value) / fullWidth,
+        percent: (x * 100) / 245,
+        currentTime: (x * secondsDuration.value) / 245,
       });
+    }
+
+    function setRepeat(val) {
+      const newVal = repeat.value === val ? 0 : val;
+      store.dispatch('setRepeat', newVal);
     }
 
     return {
@@ -319,9 +363,9 @@ export default {
       duration,
       timer,
       volume,
+      repeat,
       listClosed,
       animateLeft,
-      animateRight,
       percent,
       onMounted,
       next,
@@ -332,8 +376,10 @@ export default {
       volumeChange,
       mute,
       openLink,
+      openGithub,
       openList,
       setTimeSong,
+      setRepeat,
     };
   },
 };
@@ -472,6 +518,7 @@ export default {
     background: $light-gray;
     margin: 0 5px;
     border-radius: 5px;
+    cursor: pointer;
   }
 
   &__progress > span {
@@ -492,22 +539,3 @@ export default {
   }
 }
 </style>
-
-// repeat
-// <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-//   <path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3" />
-//   <path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3" />
-
-next
-// <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-//   <line x1="21" y1="7" x2="3" y2="7" />
-//   <path d="M18 10l3 -3l-3 -3" />
-//   <path d="M6 20l-3 -3l3 -3" />
-//   <line x1="3" y1="17" x2="21" y2="17" />
-
-// soufle
-// <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-// <line x1="21" y1="7" x2="3" y2="7" />
-// <path d="M18 10l3 -3l-3 -3" />
-// <path d="M6 20l-3 -3l3 -3" />
-// <line x1="3" y1="17" x2="21" y2="17" />

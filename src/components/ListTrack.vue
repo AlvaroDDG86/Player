@@ -31,7 +31,8 @@
         width="20"
         height="20"
         viewBox="0 0 24 24"
-        stroke-width="2" stroke="#005CC8"
+        stroke-width="2"
+        stroke="#FF5CC8"
         fill="none"
         stroke-linecap="round"
         stroke-linejoin="round"
@@ -162,6 +163,6 @@ export default {
 }
 
 .selected {
-  border: 3px solid gold;
+  border: 3px solid #FF5CC8;
 }
 </style>
