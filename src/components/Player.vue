@@ -337,7 +337,7 @@ export default {
     }
 
     function openGithub() {
-      window.open('https://www.github.com');
+      window.open('https://github.com/AlvaroDDG86/Player');
     }
 
     function openList() {
