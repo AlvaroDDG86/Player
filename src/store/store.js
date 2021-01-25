@@ -124,7 +124,7 @@ const store = createStore({
     songTime: 0,
     percent: 0,
     repeat: 3,
-    volume: 50,
+    volume: 0.5,
   },
   getters: {
     getTracks: (state) => state.tracks,
@@ -201,6 +201,7 @@ const store = createStore({
       const newTrack = state.tracks[index];
       dispatch('stop');
       const audio = createAudio(newTrack, commit);
+      audio.volume = state.volume;
       commit('SET_AUDIO', audio);
       commit('SET_TRACK', newTrack);
       dispatch('play');

@@ -457,8 +457,7 @@ export default {
     border-radius: 10px;
     cursor: pointer;
     transition: 0.2s;
-    padding: 0.3em;
-    margin: 0.2em;
+    padding: 0.5em;
     border-radius: 50%;
 
     &--right {
