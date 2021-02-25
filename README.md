@@ -1,24 +1,7 @@
 # player
 
-## Project setup
-```
-npm install
-```
+## Vue App 
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
+Vue 3, Vuex, SCSS and more 
 
-### Compiles and minifies for production
-```
-npm run build
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+[Live Demo](https://alvaroddg86.github.io/Player/)
